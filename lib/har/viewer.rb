@@ -22,6 +22,11 @@ module HAR
         progress("Merging HARs...") {
           @har = Archive.by_merging hars
         }
+
+        @hars = [];
+        hars.each do |har|
+          @hars.push Archive.from_file har
+        end
       end
     end
 
@@ -54,7 +59,11 @@ module HAR
         at_exit { FileUtils.rm_rf tmp_dir }
         FileUtils.cp_r viewer, tmp_dir
 
-        har.save_to File.join(tmp_dir, 'viewer', url_friendly(@har.uri))
+        har.save_to File.join(tmp_dir, 'viewer', url_friendly(@har.uri + "combo_"))
+
+        @hars.each do |har|
+          har.save_to File.join(tmp_dir, 'viewer', url_friendly(har.uri))
+        end
 
         tmp_dir
       }
@@ -89,7 +98,7 @@ module HAR
     end
 
     def url
-      "http://localhost:#{port}/viewer/index.html?path=#{url_friendly @har.uri}"
+      "http://localhost:#{port}/viewer/index.html?path=#{url_friendly @har.uri}combo_"
     end
 
     def port
@@ -108,6 +117,7 @@ module HAR
       Thread.new do
         puts "Starting server..."
         puts "Type ^C to exit\n\n"
+        puts "#{root}"
 
         server = WEBrick::HTTPServer.new(:Port          => port,
                                          :DocumentRoot  => root,
